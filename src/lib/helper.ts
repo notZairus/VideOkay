@@ -24,11 +24,15 @@ export function playYoutubeVideo(videoId: string) {
                 'onReady': (e: any) => { e.target.playVideo() },
                 'onStateChange': (e: any) => {
                     if (e.data === YT.PlayerState.ENDED) {
-                        // Handle video end
                         console.log("Video ended");
+
+                        // console.log("Player instance in order to remove the error.");
+                        // will use it for its methods later...
+                        console.log(player);
                     }
                 }
             }
         });
+
     }
 }
