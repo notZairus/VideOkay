@@ -1,5 +1,10 @@
+declare global {
+    interface Window {
+        onYouTubeIframeAPIReady: () => void;
+    }
+}
 
-
+declare var YT: any;
 
 export function playYoutubeVideo(videoId: string) {
     const tag = document.createElement('script');
@@ -7,10 +12,8 @@ export function playYoutubeVideo(videoId: string) {
 
     document.body.appendChild(tag);
 
-    var player;
-
     window.onYouTubeIframeAPIReady = () => {
-        player = new YT.Player('player', {
+        const player = new YT.Player('player', {
             width: 36*16,
             height: 36*9,
             videoId: videoId,
@@ -18,7 +21,13 @@ export function playYoutubeVideo(videoId: string) {
                 'playsinline': 1
             },
             events: {
-                'onReady': (e) => { e.target.playVideo() }
+                'onReady': (e: any) => { e.target.playVideo() },
+                'onStateChange': (e: any) => {
+                    if (e.data === YT.PlayerState.ENDED) {
+                        // Handle video end
+                        console.log("Video ended");
+                    }
+                }
             }
         });
     }
