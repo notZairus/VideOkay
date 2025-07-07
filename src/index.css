@@ -137,3 +137,8 @@
     font-family: "LF", sans-serif;
   }
 }
+
+
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
