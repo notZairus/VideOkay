@@ -18,7 +18,7 @@ export default function VideokeRoom() {
     const [currentSong, setCurrentSong] = useState<Song | undefined>(undefined);
 
 
-    function search(data: UseFormData) {
+    function search(data: { search: string }) {
         axios(`https://www.googleapis.com/youtube/v3/search?videoEmbeddable=true&maxResults=5&key=${import.meta.env.VITE_YOUTUBE_API_KEY}&part=snippet&q=${data.search + "karaoke"}&type=video`)
         .then(response => setSearchResult(response.data.items));
     }
@@ -61,7 +61,7 @@ export default function VideokeRoom() {
                     </div>
                     <div className="mt-4 space-y-1">
                         {
-                            searchResult.map((result) => (
+                            searchResult.map((result: any) => (
                                 <div className="border rounded p-2" onClick={() => addToQueue(result)} key={result.id.videoId}>
                                     {result.snippet.title}
                                 </div>
