@@ -7,25 +7,43 @@ import { Button } from "@/components/ui/button";
 import Modal from "@/components/Modal";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import type { Song } from "@/ts/types";
 
-
-
-interface UseFormData {
-    search: string
-}
 
 export default function VideokeRoom() {
-    const { register, handleSubmit, reset } = useForm<UseFormData>();
+    const { register, handleSubmit, reset } = useForm<{ search: string }>();
     const [searchingSong, setSearchingSong] = useState<boolean>(false);
-    const [searchResult, setSearchResult] = useState<any[]>([]);
-    const [queue, setQueue] = useState<any[]>([]);
+    const [searchResult, setSearchResult] = useState([]);
+    const [queue, setQueue] = useState<Song[]>([]);
+    const [currentSong, setCurrentSong] = useState<Song | undefined>(undefined);
+
 
     function search(data: UseFormData) {
-        axios(`https://www.googleapis.com/youtube/v3/search?maxResults=5&key=${import.meta.env.VITE_YOUTUBE_API_KEY}&part=snippet&q=${data.search + "karaoke"}&type=video`)
+        axios(`https://www.googleapis.com/youtube/v3/search?videoEmbeddable=true&maxResults=5&key=${import.meta.env.VITE_YOUTUBE_API_KEY}&part=snippet&q=${data.search + "karaoke"}&type=video`)
         .then(response => setSearchResult(response.data.items));
     }
 
-    console.log(queue);
+    function addToQueue(song: any) {
+        
+        let newSong: Song = {
+            id: song.id.videoId,
+            title: song.snippet.title,
+            thumbnail: song.snippet.thumbnails.default.url,
+            channel: song.snippet.channelTitle
+        }
+
+        if (!currentSong) {
+            setCurrentSong(newSong);
+            return;
+        }
+
+        setQueue([...queue, newSong]);
+
+        setSearchingSong(false);
+        setSearchResult([]);
+        reset()
+    }
+
 
     return (
         <>
@@ -44,7 +62,7 @@ export default function VideokeRoom() {
                     <div className="mt-4 space-y-1">
                         {
                             searchResult.map((result) => (
-                                <div className="border rounded p-2" onClick={() => setQueue([...queue, result])}>
+                                <div className="border rounded p-2" onClick={() => addToQueue(result)} key={result.id.videoId}>
                                     {result.snippet.title}
                                 </div>
                             ))
@@ -60,7 +78,7 @@ export default function VideokeRoom() {
                 <main className="w-full lg:max-w-5/6 max-w-11/12 mt-8 mx-auto">
                     <div className="flex gap-8 flex-col lg:flex-row">
                         <div>
-                            <YoutubeIFrame videoId={"m9PFo_8eKnM"}/>
+                            <YoutubeIFrame videoId={currentSong?.id}/>
                         </div>
                         <div className="flex-1 flex flex-col">
                             <div>
@@ -69,7 +87,7 @@ export default function VideokeRoom() {
                                     <div className="w-full scroll-hidden max-h-[200px] relative min-h-20 space-y-2 flex-1 rounded overflow-y-scroll">
                                         {
                                             queue.map((song, index) => (
-                                                <SongQueue key={index}>{song.snippet.title}</SongQueue>
+                                                <SongQueue key={index}>{song.title}</SongQueue>
                                             ))
                                         }
                                     </div>
@@ -82,12 +100,6 @@ export default function VideokeRoom() {
                             </div>
                         </div>
                     </div>
-                    {/* <div className="w-full mt-4">
-                        <p className="text-xl">Queue:</p>
-                        <div className="flex flex-col md:flex-row lg:flex-row items-center bg-primary lg:items-start min-h-24 mt-2 rounded gap-2 flex-wrap">
-                            
-                        </div>
-                    </div> */}
                 </main>
             </div>
         </>
