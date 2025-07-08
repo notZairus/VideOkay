@@ -1,13 +1,21 @@
 import Header from "@/components/Header";
-import YoutubeIFrame from "@/components/YoutubeIFrame";
 import SongQueue from "@/components/SongQueue";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/Modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import type { Song } from "@/ts/types";
+
+
+declare global {
+    interface Window {
+        onYouTubeIframeAPIReady: () => void,
+    }
+}
+
+declare var YT: any;
 
 
 export default function VideokeRoom() {
@@ -15,8 +23,13 @@ export default function VideokeRoom() {
     const [searchingSong, setSearchingSong] = useState<boolean>(false);
     const [searchResult, setSearchResult] = useState([]);
     const [queue, setQueue] = useState<Song[]>([]);
-    const [currentSong, setCurrentSong] = useState<Song | undefined>(undefined);
-
+    const [currentSong, setCurrentSong] = useState<Song>({
+        id: "rW2541x8VzY",
+        title: "Piano Man",
+        thumbnail: "",
+        channel: ""
+    });
+    const [videoPlayer, setVideoPlayer] = useState<any>();
 
     function search(data: { search: string }) {
         axios(`https://www.googleapis.com/youtube/v3/search?videoEmbeddable=true&maxResults=5&key=${import.meta.env.VITE_YOUTUBE_API_KEY}&part=snippet&q=${data.search + "karaoke"}&type=video`)
@@ -24,7 +37,6 @@ export default function VideokeRoom() {
     }
 
     function addToQueue(song: any) {
-        
         let newSong: Song = {
             id: song.id.videoId,
             title: song.snippet.title,
@@ -43,6 +55,69 @@ export default function VideokeRoom() {
         setSearchResult([]);
         reset()
     }
+
+    useEffect(() => {
+        function handleVideoEnded() {
+            if (queue.length === 0)return;
+
+            let nextSong = queue[0];
+            setCurrentSong(nextSong);
+            setQueue(queue.slice(1));
+        }
+
+        document.addEventListener('vidEnded', handleVideoEnded)
+
+        return () => {
+            removeEventListener('vidEnded', handleVideoEnded);
+        }
+    }, [queue]);
+
+    useEffect(() => {
+        if (!videoPlayer) return;
+        videoPlayer.loadVideoById(currentSong.id);
+    }, [currentSong]);
+
+
+    useEffect(() => {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+
+        if (!document.getElementById('youtube-iframe-api')) {
+            const tag = document.createElement('script');
+            tag.id = 'youtube-iframe-api';
+            tag.src = "https://www.youtube.com/iframe_api";
+            document.body.appendChild(tag);
+        }
+
+        let player: any;
+
+        window.onYouTubeIframeAPIReady = () => {
+            player = new YT.Player('player', {
+                width: 36*16,
+                height: 36*9,
+                videoId: currentSong.id,
+                playerVars: {
+                    'playsinline': 1,
+                    'rel': 0,
+                },
+                events: {
+                    'onReady': (e: any) => { e.target.playVideo() },
+                    'onStateChange': (e: any) => {
+                        if (e.data === YT.PlayerState.ENDED) {
+                            document.dispatchEvent(new CustomEvent('vidEnded'));
+                        }
+                    }
+                }
+            });
+            setVideoPlayer(player);
+        }
+
+        return () => {
+            if (player && typeof player.destroy === 'function') {
+                player.destroy();
+            }
+        };
+    }, []);
 
 
     return (
@@ -78,7 +153,10 @@ export default function VideokeRoom() {
                 <main className="w-full lg:max-w-5/6 max-w-11/12 mt-8 mx-auto">
                     <div className="flex gap-8 flex-col lg:flex-row">
                         <div>
-                            <YoutubeIFrame videoId={currentSong?.id}/>
+                            <p className="text-xl">Now Playing</p>
+                            <div className="lg:w-[600px] w-full aspect-16/9 mt-2 bg-black/80 rounded overflow-hidden flex items-center justify-center" id="player">
+                                {!currentSong && <p className="text-white text-center pt-4 text-2xl">No song selected</p>}
+                            </div>
                         </div>
                         <div className="flex-1 flex flex-col">
                             <div>
