@@ -3,12 +3,12 @@
 export interface User {
     id: string,
     name: string,
-    isAdmin?: boolean
+    isHost?: boolean
 }
 
-export interface Song {
+export interface Video {
     id: string,
     title: string,
     thumbnail: string,
-    channel?: string,
+    channelId?: string,
 }
