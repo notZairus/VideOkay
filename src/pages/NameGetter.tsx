@@ -29,7 +29,8 @@ export default function NameGetter() {
             let result = await addDoc(collection(db, `rooms`),{ 
                 host: {...user},
                 created_at: new Date().toISOString(),
-                currentVideo: null
+                currentVideo: null,
+                queue: [],
             });
 
             navigate(`/host`, {

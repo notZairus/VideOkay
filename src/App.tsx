@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Welcome from "./pages/Welcome";
-import NameGetter from "./pages/NameGetter";
 import { QueueProvider } from "./contexts/QueueContext";
 
+
 import HostRoom from "./pages/HostRoom";
+import Welcome from "./pages/Welcome";
+import NameGetter from "./pages/NameGetter";
 
 
 function App() {

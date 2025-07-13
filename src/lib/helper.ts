@@ -1,24 +1,22 @@
-import { deleteDoc, doc, collection, getDocs } from "firebase/firestore";
+import { doc, collection, getDocs, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebaseClient";
+import type {Video} from "@/ts/types";
 
 
-export async function deleteRoomOnDb(id: string) {
-    if (!id) {
-        console.error("Room ID is required to delete the room.");
-        return;
-    }
-    
-    const members = await getDocs(collection(db, `rooms/${id}/members`));
-    members.forEach(async (member) => {
-        console.log(member);
-        await deleteDoc(member.ref);
+export async function setRemoteCurrentVideo(roomCode: string, param: Video | null) {
+    let roomSnapshot = await getDoc(doc(db, `rooms/${roomCode}`));
+
+    await setDoc(roomSnapshot.ref, {
+        ...roomSnapshot.data(),
+        currentVideo: param,
     })
-
-    const queue = await getDocs(collection(db, `rooms/${id}/queue`));
-    queue.forEach(async (song) => {
-        await deleteDoc(song.ref);
-    })
-
-    const prevUserId = id;
-    await deleteDoc(doc(db, "rooms", prevUserId as string));
 }
+
+export async function setRemoteQueue(roomCode: string, queue: Video[]) {
+    let roomSnapshot = await getDoc(doc(db, `rooms/${roomCode}`));
+
+    await setDoc(roomSnapshot.ref, {
+        ...roomSnapshot.data(),
+        queue: queue
+    })
+} 
